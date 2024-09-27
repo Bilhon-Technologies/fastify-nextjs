@@ -23,9 +23,7 @@ function fastifyNext (fastify, options, next) {
         .decorate('next', route.bind(fastify))
         .decorateReply('nextRender', render)
         .decorateReply('nextRenderError', renderError)
-        .addHook('onClose', function () {
-          return app.close()
-        })
+        .addHook('onClose', () => app.close())
 
       if (noServeAssets) {
         return next()
@@ -97,21 +95,20 @@ function fastifyNext (fastify, options, next) {
   }
 
   async function renderError (err) {
-    const reply = this
     const { request } = reply
 
     // set custom headers as next will finish the request
-    for (const [headerName, headerValue] of Object.entries(reply.getHeaders())) {
-      reply.raw.setHeader(headerName, headerValue)
+    for (const [headerName, headerValue] of Object.entries(this.getHeaders())) {
+      this.raw.setHeader(headerName, headerValue)
     }
 
-    await app.renderError(err, request.raw, reply.raw, request.url, request.query)
+    await app.renderError(err, request.raw, this.raw, request.url, request.query)
 
-    reply.hijack()
+    this.hijack()
   }
 }
 
 module.exports = fp(fastifyNext, {
-  fastify: '4.x',
+  fastify: '5.x',
   name: '@fastify/nextjs'
 })
